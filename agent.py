@@ -51,7 +51,10 @@ class DiagnosisAgent:
                 self.vector = None
         self.embedder = get_embedder()
         self.llm = LLM()
-        self._known_symptoms = set(self.graph.list_symptoms())
+        try:
+            self._known_symptoms = set(self.graph.list_symptoms())
+        except Exception:  # Neo4j 不可达时先不崩，症状集合留空（后续查询会给出明确错误）
+            self._known_symptoms = set()
 
     def close(self):
         self.graph.close()

@@ -7,7 +7,7 @@
 云端：Vercel 自动识别 app.py 导出的 `app`（无需额外配置）
 
 接口：
-    GET  /healthz   健康检查（Neo4j / Milvus）
+    GET  /healthz   健康检查（Neo4j / Milvus 连通性）
     POST /api/chat  对话入口 {message, session?} -> {status, reply, report, session}
     GET  /          前端页面（本地开发用）
 """
@@ -22,7 +22,6 @@ from agent import DiagnosisAgent
 
 app = FastAPI(title="疾病问诊 Agent", version="1.0")
 
-# 允许 Netlify 前端跨域访问（来源用 config.CORS_ORIGINS 配置，默认 *）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in config.CORS_ORIGINS.split(",") if o.strip()],
@@ -30,7 +29,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-agent = DiagnosisAgent()
+# 延迟初始化，避免冷启动时因 Neo4j 暂不可达导致整个模块加载失败
+_agent = None
+
+
+def get_agent() -> DiagnosisAgent:
+    global _agent
+    if _agent is None:
+        _agent = DiagnosisAgent()
+    return _agent
 
 
 class ChatRequest(BaseModel):
@@ -41,9 +48,13 @@ class ChatRequest(BaseModel):
 @app.get("/healthz")
 def healthz():
     checks = {}
+    # 用独立 Graph 探测 Neo4j，不依赖 agent 初始化结果
     try:
-        agent.graph.verify()
+        from graph import Graph
+        g = Graph()
+        g.verify()
         checks["neo4j"] = "ok"
+        g.close()
     except Exception as e:  # noqa: BLE001
         checks["neo4j"] = f"error: {type(e).__name__}"
     checks["milvus"] = "disabled" if not config.USE_MILVUS else "ok"
@@ -54,7 +65,17 @@ def healthz():
 @app.post("/api/chat")
 def chat(req: ChatRequest):
     session = req.session or {}
-    res = agent.diagnose(req.message, session)
+    try:
+        res = get_agent().diagnose(req.message, session)
+    except Exception as e:  # noqa: BLE001 —— 明确报错而不是 500
+        return {
+            "status": "error",
+            "reply": f"后端出错：{type(e).__name__} — {str(e)[:200]}",
+            "report": None,
+            "symptoms": [],
+            "session": session,
+            "partial": [],
+        }
     return {
         "status": res["status"],
         "reply": res["reply"],

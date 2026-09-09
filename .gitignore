@@ -1,0 +1,22 @@
+# === 敏感信息（绝不能提交）===
+.env
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# === 依赖 wheel / 临时文件 ===
+wheels/
+wheels2/
+*.whl
+*.log
+body.json
+
+# === 系统 / 编辑器 ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

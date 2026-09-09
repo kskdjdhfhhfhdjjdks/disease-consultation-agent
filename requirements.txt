@@ -1,0 +1,11 @@
+# LLM / 向量
+anthropic
+numpy
+
+# 知识图谱 / 向量库
+neo4j>=5.0
+pymilvus>=2.3
+
+# Web 接口 + 前端
+fastapi
+uvicorn

@@ -1,0 +1,12 @@
+# Netlify 静态站点配置：发布 static/ 目录（前端页面）
+# 后端 app.py 部署在 Render，前端通过 static/index.html 顶部的 API_BASE 指向它。
+
+[build]
+  publish = "static"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

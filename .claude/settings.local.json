@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:triage-agent-web.netlify.app)",
+      "WebFetch(domain:kcnrgisprzc6.feishu.cn)"
+    ]
+  }
+}

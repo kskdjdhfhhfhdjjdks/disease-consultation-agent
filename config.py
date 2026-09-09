@@ -2,6 +2,9 @@
 
 所有可配置项都支持通过环境变量或项目根目录的 `.env` 文件覆盖。
 默认值针对本机已就绪的环境：Neo4j bolt 7687、Milvus 19530。
+
+注意：环境变量为「空字符串」时视同未设置，使用默认值——避免云端某个
+变量被误设成空值导致 int()/float() 解析崩溃。
 """
 import os
 from pathlib import Path
@@ -20,32 +23,46 @@ def _load_dotenv(path: str = ".env") -> None:
         os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
 
 
+def _env(key: str, default: str = "") -> str:
+    """读取环境变量；None 或空字符串视同未设置，返回 default。"""
+    val = os.getenv(key)
+    return default if val is None or val.strip() == "" else val
+
+
+def _env_int(key: str, default: int) -> int:
+    return int(_env(key, str(default)))
+
+
+def _env_float(key: str, default: float) -> float:
+    return float(_env(key, str(default)))
+
+
 _load_dotenv()
 
 # ---- Neo4j（知识图谱：符号推理）----
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "neo4j")  # 请按实际密码修改 .env
+NEO4J_URI = _env("NEO4J_URI", "bolt://127.0.0.1:7687")
+NEO4J_USER = _env("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = _env("NEO4J_PASSWORD", "neo4j")  # 请按实际密码修改 .env
 
 # ---- Milvus（向量库：语义检索 / 实体链接）----
-MILVUS_HOST = os.getenv("MILVUS_HOST", "127.0.0.1")
-MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
+MILVUS_HOST = _env("MILVUS_HOST", "127.0.0.1")
+MILVUS_PORT = _env("MILVUS_PORT", "19530")
 
 # ---- Embedding ----
 # 占位实现用 n-gram 哈希；生产请换成语义模型（见 embedder.py）
-EMBED_DIM = int(os.getenv("EMBED_DIM", "256"))
-EMBED_MODEL = os.getenv("EMBED_MODEL", "ngram")
+EMBED_DIM = _env_int("EMBED_DIM", 256)
+EMBED_MODEL = _env("EMBED_MODEL", "ngram")
 # 实体链接的余弦相似度阈值（低于此值视为未命中，进入追问）
-LINK_THRESHOLD = float(os.getenv("LINK_THRESHOLD", "0.6"))
+LINK_THRESHOLD = _env_float("LINK_THRESHOLD", 0.6)
 
 # ---- LLM（Claude）----
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-5")
+ANTHROPIC_MODEL = _env("ANTHROPIC_MODEL", "claude-opus-5")
 
 # ---- 对话追问 ----
-MAX_FOLLOWUP_ROUNDS = int(os.getenv("MAX_FOLLOWUP_ROUNDS", "3"))
+MAX_FOLLOWUP_ROUNDS = _env_int("MAX_FOLLOWUP_ROUNDS", 3)
 
 # ---- 部署开关（云端）----
 # 云端无 Milvus 时设为 false（退化为精确匹配 + 规则/LLM 抽取）
-USE_MILVUS = os.getenv("USE_MILVUS", "true").lower() in ("1", "true", "yes")
+USE_MILVUS = _env("USE_MILVUS", "true").lower() in ("1", "true", "yes")
 # 允许跨域的前端来源，多个用英文逗号分隔；"*" 表示任意来源
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+CORS_ORIGINS = _env("CORS_ORIGINS", "*")

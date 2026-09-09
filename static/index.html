@@ -173,9 +173,9 @@ const resetBtn = document.getElementById('resetBtn');
 let session = { symptoms: [], rounds: 0, asked: [] };
 
 // ===== 部署配置 =====
-// 部署到 Netlify 后，把这里改成你的后端地址（Render 给的 https://xxx.onrender.com）。
-// 留空 '' 表示同域（本地开发 / 前后端同域部署时用）。
-const API_BASE = '';
+// 部署到 Netlify 后，这里指向你的后端地址（Vercel）。
+// 本地开发时改回 ''（同域，uvicorn 直连本地）。
+const API_BASE = 'https://disease-consultation-agent.vercel.app';
 
 function scrollBottom() { chatEl.scrollTop = chatEl.scrollHeight; }
 

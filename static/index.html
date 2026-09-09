@@ -169,7 +169,8 @@ const inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const resetBtn = document.getElementById('resetBtn');
 
-let sessionId = null;
+// 会话状态由前端维护，随每次请求回传后端（无状态后端）
+let session = { symptoms: [], rounds: 0, asked: [] };
 
 // ===== 部署配置 =====
 // 部署到 Netlify 后，把这里改成你的后端地址（Render 给的 https://xxx.onrender.com）。
@@ -301,10 +302,10 @@ async function send() {
     const resp = await fetch(API_BASE + '/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, session_id: sessionId })
+      body: JSON.stringify({ message: text, session: session })
     });
     const data = await resp.json();
-    sessionId = data.session_id;
+    session = data.session || session;
     removeTyping(typing);
 
     if (data.status === 'done' && data.report) {
@@ -321,11 +322,8 @@ async function send() {
   }
 }
 
-async function reset() {
-  if (sessionId) {
-    try { await fetch(API_BASE + '/api/reset', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({session_id: sessionId}) }); } catch (e) {}
-  }
-  sessionId = null;
+function reset() {
+  session = { symptoms: [], rounds: 0, asked: [] };
   chatEl.innerHTML = '';
   addAssistantText('你好，我是疾病问诊助手。请描述你的症状，我会给出候选疾病、建议检查和就诊建议。');
 }

@@ -1,11 +1,13 @@
-# LLM / 向量
+# LLM
 anthropic
 numpy
 
-# 知识图谱 / 向量库
+# 知识图谱
 neo4j>=5.0
-pymilvus>=2.3
 
-# Web 接口 + 前端
+# Web 接口（本地 uvicorn 或 Vercel serverless）
 fastapi
 uvicorn
+
+# 可选：本地 Milvus 向量检索（云端部署无需安装）
+# pymilvus>=2.3

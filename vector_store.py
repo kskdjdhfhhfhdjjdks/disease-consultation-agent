@@ -5,7 +5,11 @@
   - disease_emb     疾病语义向量（用户描述 -> 候选疾病兜底）
   - knowledge_chunk 医学知识片段（RAG）
 """
-from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, connections, utility
+try:
+    from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, connections, utility
+    _HAS_PYMILVUS = True
+except ImportError:  # 云端未装 pymilvus 时不阻塞导入（Milvus 为可选能力）
+    _HAS_PYMILVUS = False
 
 import config
 
@@ -27,6 +31,8 @@ class VectorStore:
     """Milvus 连接与操作封装。"""
 
     def __init__(self, host=None, port=None):
+        if not _HAS_PYMILVUS:
+            raise RuntimeError("pymilvus 未安装，Milvus 能力不可用")
         connections.connect(
             alias="default",
             host=host or config.MILVUS_HOST,

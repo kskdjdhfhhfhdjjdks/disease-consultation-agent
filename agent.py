@@ -95,7 +95,7 @@ class DiagnosisAgent:
 
     # ---------- 主入口 ----------
     def diagnose(self, text: str, session: dict | None = None) -> dict:
-        session = session or {"symptoms": [], "asked": set(), "rounds": 0}
+        session = session or {"symptoms": [], "asked": [], "rounds": 0}
 
         # Step 1~2：抽取 + 链接 + 合并
         for s in self._extract(text):
@@ -139,7 +139,7 @@ class DiagnosisAgent:
             key = f"red:{s}"
             if key in session["asked"]:
                 continue
-            session["asked"].add(key)
+            session["asked"].append(key)
             session["rounds"] += 1
             if s in RED_FLAG_QUESTIONS:
                 return self._followup_text(RED_FLAG_QUESTIONS[s], s)
